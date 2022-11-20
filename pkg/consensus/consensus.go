@@ -9,11 +9,3 @@ type Instance struct {
 	Transport transport.Transport
 	Log       log.Instance
 }
-
-func (i *Instance) AppendEntries() {
-	i.Transport.AppendEntries()
-}
-
-func (i *Instance) RequestVote() {
-	i.Transport.RequestVote()
-}

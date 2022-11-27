@@ -55,6 +55,65 @@ type Entry struct {
 	Value     []byte
 }
 
+func (i *Instance) Commit(commitindex Index) error {
+	i.mx.Lock()
+	defer i.mx.Unlock()
+	indexOffset := IndexSize * (int(commitindex) - 1)
+	index := make([]byte, IndexSize)
+	_, err := i.indexFile.ReadAt(index, int64(indexOffset))
+	if err != nil {
+		return err
+	}
+	offset := index[0:8]
+	lens := index[8:]
+	bytOffset := bytes.NewBuffer(offset)
+	dataoffset, err := binary.ReadVarint(bytOffset)
+	if err != nil {
+		return err
+	}
+
+	bytLen := bytes.NewBuffer(lens)
+	datalen, err := binary.ReadVarint(bytLen)
+	if err != nil {
+		return err
+	}
+
+	//use the offset and datalen to read data
+	data := make([]byte, datalen)
+	_, err = i.dataFile.ReadAt(data, dataoffset)
+	if err != nil {
+		return err
+	}
+	entry := Entry{}
+	err = json.Unmarshal(data, &entry)
+	entry.Committed = true
+	eb, err := json.Marshal(entry)
+	if err != nil {
+		return err
+	}
+	info, err := i.dataFile.Stat()
+	if err != nil {
+		return err
+	}
+	offsetint := info.Size()
+	lensint, err := i.dataFile.Write(eb)
+	if err != nil {
+		return err
+	}
+	offsetBytes := make([]byte, IndexOffsetSize)
+	binary.PutVarint(offsetBytes, offsetint)
+	lensBytes := make([]byte, IndexDatalenSize)
+	binary.PutVarint(lensBytes, int64(lensint))
+	totalbytes := append(offsetBytes, lensBytes...)
+
+	//Write to indexfile
+
+	_, err = i.indexFile.WriteAt(totalbytes, int64(indexOffset))
+	if err != nil {
+		return err
+	}
+	return nil
+}
 func (i *Instance) Write(key string, value []byte) error {
 	i.mx.Lock()
 	defer i.mx.Unlock()

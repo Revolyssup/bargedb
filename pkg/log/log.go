@@ -112,6 +112,7 @@ func (i *Instance) Commit(commitindex Index) error {
 	if err != nil {
 		return err
 	}
+	i.LastCommitted = commitindex
 	return nil
 }
 func (i *Instance) Write(key string, value []byte) error {
@@ -124,7 +125,6 @@ func (i *Instance) Write(key string, value []byte) error {
 		Index:     Index(i.Lastindex + 1),
 		Term:      i.CurrentTerm,
 	}
-	i.Lastindex++
 	eb, err := json.Marshal(entry)
 	if err != nil {
 		return err
@@ -150,7 +150,7 @@ func (i *Instance) Write(key string, value []byte) error {
 	if err != nil {
 		return err
 	}
-
+	i.Lastindex++
 	return nil
 }
 

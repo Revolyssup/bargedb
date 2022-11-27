@@ -1,0 +1,23 @@
+name: Unit tests
+on: 
+  pull_request:
+    branches: 
+      - "main"
+  push:
+    branches:
+      - "master"
+jobs:
+  unit-test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+        with:
+          fetch-depth: 2      
+      - name: Setup Go
+        uses: actions/setup-go@master
+        with:
+          go-version: "1.19"      
+      - name: Run test
+        run: go test --short ./... -race 
+  

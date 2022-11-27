@@ -88,14 +88,14 @@ func TestCommit(t *testing.T) {
 		Key:       "name",
 		Value:     []byte("Anurag"),
 	}
-	log, err := NewInstance("./mock_index.barge", "./mock_data.barge")
+	log, err := NewInstance("./mock_index_commit.barge", "./mock_data_commit.barge")
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	defer func() {
-		os.Remove("./mock_index.barge")
-		os.Remove("./mock_data.barge")
+		os.Remove("./mock_index_commit.barge")
+		os.Remove("./mock_data_commit.barge")
 	}()
 	for keyval, entry := range tests.entries {
 		keyvals := strings.Split(keyval, "=")
@@ -122,6 +122,10 @@ func TestCommit(t *testing.T) {
 
 		if !entryGot.Committed {
 			t.Fatalf("expected %+v got %+v", entry, entryGot)
+			return
+		}
+		if log.LastCommitted != entryGot.Index {
+			t.Fatalf("Expected last commited %v, got %v", entryGot.Index, log.LastCommitted)
 			return
 		}
 

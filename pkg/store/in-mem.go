@@ -46,26 +46,40 @@ func (ims *InMemStore) Set(key string, value []byte) error {
 
 // Delete deletes the value for the given key.
 func (ims *InMemStore) Delete(key string) error {
+	ims.mx.Lock()
+	defer ims.mx.Unlock()
+	if ims.data[key] != nil {
+		delete(ims.data, key)
+	}
 	return nil
 }
 
 // Exists returns true if the given key exists.
 func (ims *InMemStore) Exists(key string) (bool, error) {
+	ims.mx.Lock()
+	defer ims.mx.Unlock()
+	if ims.data[key] != nil {
+		return true, nil
+	}
 	return false, nil
 }
 
 // Len returns the number of keys in the storage.
 func (ims *InMemStore) Len() (int, error) {
-	return 0, nil
+	ims.mx.Lock()
+	defer ims.mx.Unlock()
+	count := len(ims.data)
+	return count, nil
 }
 
 // PhysicalSnapshot writes snapshot of the storage data to
 // the given writer.
+// Since this is an in-mem implementation we dont need Physical snapshot.(Also the log in Consensus layer stores data on non-volatile storage)
 func (ims *InMemStore) PhysicalSnapshot(w io.Writer) error {
 	return nil
 }
 
-// Close closes the storage.
+// Close closes the storage. (Since this is an in-mem implementation, we don't really need to implement Close)
 func (ims *InMemStore) Close() error {
 	return nil
 }

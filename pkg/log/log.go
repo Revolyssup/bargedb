@@ -100,7 +100,6 @@ const IndexOffsetSize int = 8
 const IndexDatalenSize int = 4
 
 func (i *Instance) Read(entryIndex Index) (*Entry, error) {
-
 	indexOffset := IndexSize * (int(entryIndex) - 1)
 	index := make([]byte, IndexSize)
 	_, err := i.indexFile.ReadAt(index, int64(indexOffset))

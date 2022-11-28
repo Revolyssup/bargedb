@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"os"
 	"sync"
 )
@@ -26,14 +27,6 @@ func NewInstance(indexfilepath string, datafilepath string) (*Instance, error) {
 	if err != nil {
 		return nil, err
 	}
-	// indexFile, err := os.OpenFile(indexfilepath, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// dataFile, err := os.OpenFile(datafilepath, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
-	// if err != nil {
-	// 	return nil, err
-	// }
 	dataFile, err := os.Create(datafilepath)
 	if err != nil {
 		return nil, err
@@ -50,7 +43,7 @@ type Index int
 type Entry struct {
 	Term      int   //denotes the term in which this log entry was added
 	Index     Index //Will increment monotonically with each new entry
-	Committed bool  //Denotes if the entry is committed
+	Committed int   //Denotes if the entry is committed -- boolean is not used because I am using json.Marshal to generate bytes which change in length as we go from "false" to "true"(1 byte less). 0 and 1 on the other hand both consume same amount of bytes
 	Key       string
 	Value     []byte
 }
@@ -84,31 +77,20 @@ func (i *Instance) Commit(commitindex Index) error {
 	if err != nil {
 		return err
 	}
-	entry := Entry{}
+	fmt.Println("prev data: ", string(data))
+	var entry Entry
 	err = json.Unmarshal(data, &entry)
-	entry.Committed = true
+	if err != nil {
+		return err
+	}
+	entry.Committed = 1
 	eb, err := json.Marshal(entry)
 	if err != nil {
 		return err
 	}
-	info, err := i.dataFile.Stat()
-	if err != nil {
-		return err
-	}
-	offsetint := info.Size()
-	lensint, err := i.dataFile.Write(eb)
-	if err != nil {
-		return err
-	}
-	offsetBytes := make([]byte, IndexOffsetSize)
-	binary.PutVarint(offsetBytes, offsetint)
-	lensBytes := make([]byte, IndexDatalenSize)
-	binary.PutVarint(lensBytes, int64(lensint))
-	totalbytes := append(offsetBytes, lensBytes...)
-
-	//Write to indexfile
-
-	_, err = i.indexFile.WriteAt(totalbytes, int64(indexOffset))
+	fmt.Println("new data: ", string(eb))
+	fmt.Println("dataoffset: ", dataoffset)
+	_, err = i.dataFile.WriteAt(eb, dataoffset)
 	if err != nil {
 		return err
 	}
@@ -121,7 +103,7 @@ func (i *Instance) Write(key string, value []byte) error {
 	entry := Entry{
 		Key:       key,
 		Value:     value,
-		Committed: false,
+		Committed: 0,
 		Index:     Index(i.Lastindex + 1),
 		Term:      i.CurrentTerm,
 	}
@@ -145,7 +127,6 @@ func (i *Instance) Write(key string, value []byte) error {
 	totalbytes := append(offsetBytes, lensBytes...)
 
 	//Write to indexfile
-
 	_, err = i.indexFile.Write(totalbytes)
 	if err != nil {
 		return err

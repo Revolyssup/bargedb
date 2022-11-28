@@ -16,16 +16,14 @@ func TestLogReadAndWrite(t *testing.T) {
 		entries: map[string]Entry{},
 	}
 	tests.entries["name=Ashish=1"] = Entry{
-		Term:      1,
 		Index:     1,
-		Committed: false,
+		Committed: 0,
 		Key:       "name",
 		Value:     []byte("Ashish"),
 	}
 	tests.entries["name=Anurag=2"] = Entry{
-		Term:      1,
 		Index:     1,
-		Committed: false,
+		Committed: 0,
 		Key:       "name",
 		Value:     []byte("Anurag"),
 	}
@@ -34,6 +32,7 @@ func TestLogReadAndWrite(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	log.CurrentTerm = 1
 	defer func() {
 		os.Remove("./mock_index.barge")
 		os.Remove("./mock_data.barge")
@@ -67,6 +66,7 @@ func TestLogReadAndWrite(t *testing.T) {
 
 }
 
+// TestCommit adds one entry and commits a previous one
 func TestCommit(t *testing.T) {
 	type test struct {
 		entries map[string]Entry
@@ -75,24 +75,29 @@ func TestCommit(t *testing.T) {
 		entries: map[string]Entry{},
 	}
 	tests.entries["name=Ashish=1"] = Entry{
-		Term:      1,
 		Index:     1,
-		Committed: true,
+		Committed: 1,
 		Key:       "name",
 		Value:     []byte("Ashish"),
 	}
 	tests.entries["name=Anurag=2"] = Entry{
-		Term:      1,
 		Index:     1,
-		Committed: true,
+		Committed: 1,
 		Key:       "name",
 		Value:     []byte("Anurag"),
+	}
+	tests.entries["name=Utkarsh=3"] = Entry{
+		Index:     1,
+		Committed: 1,
+		Key:       "name",
+		Value:     []byte("Utkarsh"),
 	}
 	log, err := NewInstance("./mock_index_commit.barge", "./mock_data_commit.barge")
 	if err != nil {
 		t.Error(err)
 		return
 	}
+	log.CurrentTerm = 1
 	defer func() {
 		os.Remove("./mock_index_commit.barge")
 		os.Remove("./mock_data_commit.barge")
@@ -107,26 +112,27 @@ func TestCommit(t *testing.T) {
 			t.Error(err)
 			return
 		}
+
 		i, _ := strconv.Atoi(index)
-		err = log.Commit(Index(i))
-		if err != nil {
-			t.Error(err)
-			return
-		}
-
-		entryGot, err := log.Read(Index(i))
-		if err != nil {
-			t.Error(err)
-			return
-		}
-
-		if !entryGot.Committed {
-			t.Fatalf("expected %+v got %+v", entry, entryGot)
-			return
-		}
-		if log.LastCommitted != entryGot.Index {
-			t.Fatalf("Expected last commited %v, got %v", entryGot.Index, log.LastCommitted)
-			return
+		if i > 1 {
+			err = log.Commit(Index(i - 1)) //commit the previous entry
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			entryGot, err := log.Read(Index(i - 1)) //read the previous entry
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if entryGot.Committed == 0 {
+				t.Fatalf("expected %+v got %+v", entry, entryGot)
+				return
+			}
+			if entryGot.Index > 1 && log.LastCommitted != entryGot.Index {
+				t.Fatalf("Expected last commited %v, got %v", entryGot.Index, log.LastCommitted)
+				return
+			}
 		}
 
 	}

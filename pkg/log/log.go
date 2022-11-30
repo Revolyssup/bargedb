@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
-	"fmt"
 	"os"
 	"sync"
 )
@@ -77,7 +76,6 @@ func (i *Instance) Commit(commitindex Index) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("prev data: ", string(data))
 	var entry Entry
 	err = json.Unmarshal(data, &entry)
 	if err != nil {
@@ -88,8 +86,6 @@ func (i *Instance) Commit(commitindex Index) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("new data: ", string(eb))
-	fmt.Println("dataoffset: ", dataoffset)
 	_, err = i.dataFile.WriteAt(eb, dataoffset)
 	if err != nil {
 		return err

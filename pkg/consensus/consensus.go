@@ -3,14 +3,13 @@ package consensus
 import (
 	"github.com/Revolyssup/bargedb/pkg/log"
 	"github.com/Revolyssup/bargedb/pkg/store"
-	"github.com/Revolyssup/bargedb/pkg/transport"
 	"github.com/google/uuid"
 )
 
 type Instance struct {
-	Transport *transport.Transport //The transport layer
-	Store     store.Storage        //The state machine for this RAFT
-	Log       log.Instance         //The underlying WAL
+	Transport Transport     //The transport layer
+	Store     store.Storage //The state machine for this RAFT
+	Log       log.Instance  //The underlying WAL
 	//persisted on non-volatile storage
 	currentTerm int       //latest term server has seen (initialized to 0 on first boot, increases monotonically)
 	votedFor    uuid.UUID //candidateId that received vote in current term (or null if none)

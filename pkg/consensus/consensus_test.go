@@ -14,7 +14,7 @@ func TestAppendEntries(t *testing.T) {
 	t1 := transport.MockInstance{}
 	in1 := New(&t1, store.New(store.INMEM), log1)
 
-	log2, _ := log.NewInstance("./index.barge", "./data.barge")
+	log2, _ := log.NewInstance("./index2.barge", "./data2.barge")
 	t2 := transport.MockInstance{}
 	in2 := New(&t2, store.New(store.INMEM), log2)
 	transport.ConnectMockInstances(&t1, &t2)

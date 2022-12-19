@@ -1,7 +1,7 @@
 package log
 
 import (
-	"os"
+	"fmt"
 	"strconv"
 	"strings"
 	"testing"
@@ -34,10 +34,10 @@ func TestLogReadAndWrite(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	defer func() {
-		os.Remove("./mock_index.barge")
-		os.Remove("./mock_data.barge")
-	}()
+	// defer func() {
+	// 	os.Remove("./mock_index.barge")
+	// 	os.Remove("./mock_data.barge")
+	// }()
 	for keyval, entry := range tests.entries {
 		keyvals := strings.Split(keyval, "=")
 		key := keyvals[0]
@@ -52,6 +52,7 @@ func TestLogReadAndWrite(t *testing.T) {
 		entryGot, err := log.Read(Index(i))
 		if err != nil {
 			t.Error(err)
+			fmt.Println(entry)
 			return
 		}
 

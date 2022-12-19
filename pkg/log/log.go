@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	"io"
 	"os"
 	"sync"
 )
@@ -22,21 +23,38 @@ type Instance struct {
 }
 
 func NewInstance(indexfilepath string, datafilepath string) (*Instance, error) {
-	indexFile, err := os.Create(indexfilepath)
-	if err != nil {
-		return nil, err
+	var indexFile *os.File
+	var dataFile *os.File
+	if _, err := os.Stat(indexfilepath); err != nil {
+		indexFile, err = os.Create(indexfilepath)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		indexFile, err = os.OpenFile(indexfilepath, os.O_RDWR, os.ModeAppend)
+		if err != nil {
+			return nil, err
+		}
+		_, err = indexFile.Seek(0, io.SeekEnd)
+		if err != nil {
+			return nil, err
+		}
 	}
-	// indexFile, err := os.OpenFile(indexfilepath, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// dataFile, err := os.OpenFile(datafilepath, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	dataFile, err := os.Create(datafilepath)
-	if err != nil {
-		return nil, err
+
+	if _, err := os.Stat(datafilepath); err != nil {
+		dataFile, err = os.Create(datafilepath)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		dataFile, err = os.OpenFile(datafilepath, os.O_RDWR, os.ModeAppend)
+		if err != nil {
+			return nil, err
+		}
+		_, err = dataFile.Seek(0, io.SeekEnd)
+		if err != nil {
+			return nil, err
+		}
 	}
 	ins := Instance{
 		indexFile: indexFile,

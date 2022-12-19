@@ -119,6 +119,7 @@ func (i *Instance) Commit(commitindex Index) error {
 	i.LastCommitted = commitindex
 	return nil
 }
+
 func (i *Instance) Write(key string, value []byte) error {
 	i.mx.Lock()
 	defer i.mx.Unlock()

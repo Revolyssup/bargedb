@@ -29,6 +29,9 @@ func ConnectMockInstances(mis ...*MockInstance) {
 func (mi *MockInstance) Listen() {
 
 }
+func (mi *MockInstance) RegisterExecuter(e Executer) {
+	mi.Exec = e
+}
 
 func (mi *MockInstance) AppendEntries(term int, leaderID uuid.UUID, prevLogIndex log.Index, prevLogEntry int, entries []log.Entry, leaderCommit int) map[uuid.UUID]map[string]interface{} {
 	var response = make(map[uuid.UUID]map[string]interface{})

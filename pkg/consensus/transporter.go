@@ -2,6 +2,7 @@ package consensus
 
 import (
 	"github.com/Revolyssup/bargedb/pkg/log"
+	"github.com/Revolyssup/bargedb/pkg/transport"
 	"github.com/google/uuid"
 )
 
@@ -38,4 +39,5 @@ type Transport interface {
 	RequestVote(term int, candidateID uuid.UUID, lastLogIndex log.Index, lastLogTerm int) map[uuid.UUID]map[string]interface{}
 	//For recievers
 	Listen()
+	RegisterExecuter(transport.Executer)
 }

@@ -6,10 +6,20 @@ import (
 	"github.com/google/uuid"
 )
 
+func New(t Transport, s store.Storage, l *log.Instance) *Instance {
+	i := Instance{
+		Transport: t,
+		Store:     s,
+		Log:       l,
+	}
+
+	return &i
+}
+
 type Instance struct {
 	Transport Transport     //The transport layer
 	Store     store.Storage //The state machine for this RAFT
-	Log       log.Instance  //The underlying WAL
+	Log       *log.Instance //The underlying WAL
 	//persisted on non-volatile storage
 	currentTerm int       //latest term server has seen (initialized to 0 on first boot, increases monotonically)
 	votedFor    uuid.UUID //candidateId that received vote in current term (or null if none)

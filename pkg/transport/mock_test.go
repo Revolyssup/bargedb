@@ -14,9 +14,12 @@ func TestMockTransport(t *testing.T) {
 	me1 := MockExecutor{alwaysReturnTerm: 1}
 	me2 := MockExecutor{alwaysReturnTerm: 2}
 	me3 := MockExecutor{alwaysReturnTerm: 3}
-	mt1 := MockInstance{Exec: &me1, ID: mt1id}
-	mt2 := MockInstance{Exec: &me2, ID: mt2id}
-	mt3 := MockInstance{Exec: &me3, ID: mt3id}
+	mt1 := MockInstance{ID: mt1id}
+	mt2 := MockInstance{ID: mt2id}
+	mt3 := MockInstance{ID: mt3id}
+	mt1.RegisterExecuter(&me1)
+	mt2.RegisterExecuter(&me2)
+	mt3.RegisterExecuter(&me3)
 	ConnectMockInstances(&mt1, &mt2, &mt3)
 	response := mt1.AppendEntries(0, uuid.UUID{}, log.Index(0), 0, nil, 0)
 	for id, res := range response {

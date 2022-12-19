@@ -68,22 +68,67 @@ type Index int
 type Entry struct {
 	Term      int   //denotes the term in which this log entry was added
 	Index     Index //Will increment monotonically with each new entry
-	Committed bool  //Denotes if the entry is committed
+	Committed int   //Denotes if the entry is committed -- boolean is not used because I am using json.Marshal to generate bytes which change in length as we go from "false" to "true"(1 byte less). 0 and 1 on the other hand both consume same amount of bytes
 	Key       string
 	Value     []byte
 }
 
+func (i *Instance) Commit(commitindex Index) error {
+	i.mx.Lock()
+	defer i.mx.Unlock()
+	indexOffset := IndexSize * (int(commitindex) - 1)
+	index := make([]byte, IndexSize)
+	_, err := i.indexFile.ReadAt(index, int64(indexOffset))
+	if err != nil {
+		return err
+	}
+	offset := index[0:8]
+	lens := index[8:]
+	bytOffset := bytes.NewBuffer(offset)
+	dataoffset, err := binary.ReadVarint(bytOffset)
+	if err != nil {
+		return err
+	}
+
+	bytLen := bytes.NewBuffer(lens)
+	datalen, err := binary.ReadVarint(bytLen)
+	if err != nil {
+		return err
+	}
+
+	//use the offset and datalen to read data
+	data := make([]byte, datalen)
+	_, err = i.dataFile.ReadAt(data, dataoffset)
+	if err != nil {
+		return err
+	}
+	var entry Entry
+	err = json.Unmarshal(data, &entry)
+	if err != nil {
+		return err
+	}
+	entry.Committed = 1
+	eb, err := json.Marshal(entry)
+	if err != nil {
+		return err
+	}
+	_, err = i.dataFile.WriteAt(eb, dataoffset)
+	if err != nil {
+		return err
+	}
+	i.LastCommitted = commitindex
+	return nil
+}
 func (i *Instance) Write(key string, value []byte) error {
 	i.mx.Lock()
 	defer i.mx.Unlock()
 	entry := Entry{
 		Key:       key,
 		Value:     value,
-		Committed: false,
+		Committed: 0,
 		Index:     Index(i.Lastindex + 1),
 		Term:      i.CurrentTerm,
 	}
-	i.Lastindex++
 	eb, err := json.Marshal(entry)
 	if err != nil {
 		return err
@@ -104,12 +149,11 @@ func (i *Instance) Write(key string, value []byte) error {
 	totalbytes := append(offsetBytes, lensBytes...)
 
 	//Write to indexfile
-
 	_, err = i.indexFile.Write(totalbytes)
 	if err != nil {
 		return err
 	}
-
+	i.Lastindex++
 	return nil
 }
 

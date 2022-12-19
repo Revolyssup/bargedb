@@ -21,4 +21,6 @@ func TestAppendEntries(t *testing.T) {
 
 	//Start both instances, carry out a bunch of operations and then perform queries onto the underlying store to test whether the final state matches.
 	fmt.Println(in1, in2)
+	in1.Start()
+	in2.Start()
 }

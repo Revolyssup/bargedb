@@ -21,6 +21,7 @@ type Instance struct {
 	Store     store.Storage //The state machine for this RAFT
 	Log       *log.Instance //The underlying WAL
 	//persisted on non-volatile storage
+	id          uuid.UUID
 	currentTerm int       //latest term server has seen (initialized to 0 on first boot, increases monotonically)
 	votedFor    uuid.UUID //candidateId that received vote in current term (or null if none)
 
@@ -41,4 +42,9 @@ func (i *Instance) RecievedAppendEntries(term int, leaderID uuid.UUID, prevLogIn
 // RespondVote will be called when RequestVote is detected from transport layer via Listen()
 func (i *Instance) RespondVote(term int, candidateID uuid.UUID, lastLogIndex log.Index, lastLogTerm int) (int, bool) {
 	return 0, false
+}
+
+// Start sends the first RequestVote RPC
+func (i *Instance) Start() {
+	// i.Transport.AppendEntries(1, i.id,0,)
 }

@@ -2,7 +2,6 @@ package log
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -99,10 +98,10 @@ func TestCommit(t *testing.T) {
 		return
 	}
 	log.CurrentTerm = 1
-	defer func() {
-		os.Remove("./mock_index_commit.barge")
-		os.Remove("./mock_data_commit.barge")
-	}()
+	// defer func() {
+	// 	os.Remove("./mock_index_commit.barge")
+	// 	os.Remove("./mock_data_commit.barge")
+	// }()
 	for keyval, entry := range tests.entries {
 		keyvals := strings.Split(keyval, "=")
 		key := keyvals[0]

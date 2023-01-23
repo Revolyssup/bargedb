@@ -25,3 +25,17 @@ func (l LeaderState) ApplyAction(consensus *Instance, act Action) State {
 	}
 	return nil
 }
+
+type FollowerState struct {
+}
+
+func (l FollowerState) ApplyAction(consensus *Instance, act Action) State {
+	switch act.Name {
+	case TIMEOUT:
+
+	}
+	return nil
+}
+func (l FollowerState) Start(stop <-chan interface{}) {
+
+}

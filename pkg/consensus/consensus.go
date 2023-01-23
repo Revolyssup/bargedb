@@ -46,15 +46,14 @@ func (i *Instance) RespondVote(term int, candidateID uuid.UUID, lastLogIndex log
 }
 
 var stateContext = make(chan interface{})
-var firstRun bool = true
 
 // Start is the daemon running in the background creating timeouts/generating actions.
 // When start is run, cancel the previous Start from another state and run Start again with current state.
 func (i *Instance) Start() {
-	if !firstRun {
-		stateContext <- 0
+	if i.State == nil {
+		i.State = FollowerState{}
 	} else {
-		firstRun = false
+		stateContext <- 0
 	}
 	go i.State.Start(stateContext)
 }

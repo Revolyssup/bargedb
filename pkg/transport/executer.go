@@ -10,6 +10,8 @@ type Executer interface {
 	RespondVote(term int, candidateID uuid.UUID, lastLogIndex log.Index, lastLogTerm int) (int, bool)
 }
 
+var _ Executer = (*MockExecutor)(nil)
+
 type MockExecutor struct {
 	alwaysReturnTerm int
 }

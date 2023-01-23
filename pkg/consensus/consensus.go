@@ -18,6 +18,7 @@ func New(t Transport, s store.Storage, l *log.Instance) *Instance {
 
 type Instance struct {
 	Transport Transport     //The transport layer
+	State     State         //All instances start from FOLLOWER state
 	Store     store.Storage //The state machine for this RAFT
 	Log       *log.Instance //The underlying WAL
 	//persisted on non-volatile storage
@@ -44,7 +45,16 @@ func (i *Instance) RespondVote(term int, candidateID uuid.UUID, lastLogIndex log
 	return 0, false
 }
 
-// Start sends the first RequestVote RPC
+var stateContext = make(chan interface{})
+var firstRun bool = true
+
+// Start is the daemon running in the background creating timeouts/generating actions.
+// When start is run, cancel the previous Start from another state and run Start again with current state.
 func (i *Instance) Start() {
-	// i.Transport.AppendEntries(1, i.id,0,)
+	if !firstRun {
+		stateContext <- 0
+	} else {
+		firstRun = false
+	}
+	go i.State.Start(stateContext)
 }

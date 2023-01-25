@@ -1,6 +1,8 @@
 package consensus
 
 import (
+	"time"
+
 	"github.com/Revolyssup/bargedb/pkg/log"
 	"github.com/Revolyssup/bargedb/pkg/store"
 	"github.com/google/uuid"
@@ -45,13 +47,15 @@ func (i *Instance) RespondVote(term int, candidateID uuid.UUID, lastLogIndex log
 	return 0, false
 }
 
-var stateContext = make(chan interface{})
+var stateContext = make(chan interface{}) //should be unbuffered
 
 // Start is the daemon running in the background creating timeouts/generating actions.
 // When start is run, cancel the previous Start from another state and run Start again with current state.
 func (i *Instance) Start() {
 	if i.State == nil {
-		i.State = FollowerState{}
+		i.State = &FollowerState{
+			timeout: 300 * time.Millisecond,
+		}
 	} else {
 		stateContext <- 0
 	}

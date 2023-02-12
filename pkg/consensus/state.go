@@ -1,6 +1,7 @@
 package consensus
 
 import (
+	"context"
 	"sync"
 	"time"
 )
@@ -8,8 +9,8 @@ import (
 type State interface {
 	ApplyAction(consensus *Instance, act Action) bool //Applies the Action and returns true if it changes the state
 	//Will be run by Main Start routine after cancelling the previous run.
-	//Start should exist once it recieves signal on stop channel
-	Start(stop <-chan interface{}) //All state changes are manageed by ApplyAction and Start will be called ApplyAction brings the state from where it can START
+	//Start on all states should immediately exit once it recieves signal on context.Done() channel
+	Start(ctx context.Context) //All state changes are manageed by ApplyAction and Start will be called ApplyAction brings the state from where it can START
 }
 
 var stateLock sync.Mutex = sync.Mutex{} //Any operation that potentially changes the states should first acquire a lock
@@ -19,6 +20,7 @@ var stateLock sync.Mutex = sync.Mutex{} //Any operation that potentially changes
 type LeaderState struct {
 }
 type CandidateState struct {
+	timeout time.Duration
 }
 
 func (l *CandidateState) ApplyAction(consensus *Instance, act Action) bool {
@@ -28,10 +30,10 @@ func (l *CandidateState) ApplyAction(consensus *Instance, act Action) bool {
 	}
 	return false
 }
-func (l *CandidateState) Start(stop <-chan interface{}) {
+func (l *CandidateState) Start(ctx context.Context) {
 	for {
 		select {
-		case <-stop:
+		case <-ctx.Done():
 			return
 		default:
 
@@ -54,7 +56,9 @@ type FollowerState struct {
 func (l *FollowerState) ApplyAction(consensus *Instance, act Action) bool {
 	switch act.Name {
 	case TIMEOUT:
-		consensus.State = &CandidateState{}
+		consensus.Start(&CandidateState{
+			timeout: l.timeout,
+		})
 		return true
 	case RESTART:
 		l.restart <- 0
@@ -63,10 +67,10 @@ func (l *FollowerState) ApplyAction(consensus *Instance, act Action) bool {
 }
 
 // When ApplyAction inside of Start returns true for a state change, then Start should call go Start() on the returned state.
-func (l *FollowerState) Start(stop <-chan interface{}) {
+func (l *FollowerState) Start(ctx context.Context) {
 	for {
 		select {
-		case <-stop:
+		case <-ctx.Done():
 			return
 		default:
 

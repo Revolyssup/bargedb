@@ -2,8 +2,8 @@ package consensus
 
 import (
 	"context"
-	"io/ioutil"
-	"strconv"
+	"sync"
+	"time"
 
 	"github.com/Revolyssup/bargedb/pkg/log"
 	"github.com/Revolyssup/bargedb/pkg/store"
@@ -11,9 +11,10 @@ import (
 )
 
 type config struct {
-	ID          filename `json:"id"`
-	CurrentTerm filename `json:"currentTerm"`
-	VotedFor    filename `json:"votedFor"`
+	ID          uuid.UUID `json:"id"`
+	CurrentTerm int       `json:"currentTerm"`
+	VotedFor    uuid.UUID `json:"votedFor"`
+	Timeout     time.Duration
 }
 
 func New(t Transport, s store.Storage, l *log.Instance, cfg config) *Instance {
@@ -21,12 +22,10 @@ func New(t Transport, s store.Storage, l *log.Instance, cfg config) *Instance {
 		Transport:   t,
 		Store:       s,
 		Log:         l,
-		id:          cfg.ID,
-		currentTerm: cfg.CurrentTerm,
-		votedFor:    cfg.CurrentTerm,
 		commitIndex: 0,
 		lastApplied: 0,
 	}
+	i.SetConfig(cfg)
 	t.RegisterExecuter(&i)
 	return &i
 }
@@ -39,10 +38,10 @@ type Instance struct {
 	Log       *log.Instance //The underlying WAL
 	//persisted on non-volatile storage
 	//config consists of below non volatile fields
-	id          filename
-	currentTerm filename //latest term server has seen (initialized to 0 on first boot, increases monotonically)
-	votedFor    filename //candidateId that received vote in current term (or null if none)
-
+	id          uuid.UUID
+	currentTerm int       //latest term server has seen (initialized to 0 on first boot, increases monotonically)
+	votedFor    uuid.UUID //candidateId that received vote in current term (or null if none)
+	voteMx      sync.Mutex
 	//volatile state
 	commitIndex int //index of highest log entry known to be committed (initialized to 0, increases monotonically)
 	lastApplied int //index of highest log entry applied to state machine (initialized to 0, increases monotonically)
@@ -52,6 +51,13 @@ type Instance struct {
 	matchIndex map[uuid.UUID]log.Index //for each server, index of highest log entry known to be replicated on server (initialized to 0, increases monotonically)
 
 	cancelState context.CancelFunc //Calling this function, cancels the run of already running state
+}
+
+func (i *Instance) SetConfig(cfg config) {
+
+}
+func (i *Instance) GetConfig() (cfg config) {
+	return config{}
 }
 
 // RecievedAppendEntries will be called when AppendEntries is detected from transport layer via Listen()
@@ -64,23 +70,23 @@ func (i *Instance) RespondVote(term int, candidateID uuid.UUID, lastLogIndex log
 	return 0, false
 }
 
-func (i *Instance) setCurrentTerm(term int) {
-	err := ioutil.WriteFile(string(i.currentTerm), []byte(strconv.Itoa(term)), 0644)
-	if err != nil {
-		panic("error writing to current term file:" + err.Error())
-	}
-}
-func (i *Instance) getCurrentTerm() (term int) {
-	data, err := ioutil.ReadFile(string(i.currentTerm))
-	if err != nil {
-		panic("could not read current term: " + err.Error())
-	}
-	term, err = strconv.Atoi(string(data))
-	if err != nil {
-		panic("could not read current term: " + err.Error())
-	}
-	return
-}
+// func (i *Instance) setCurrentTerm(term int) {
+// 	err := ioutil.WriteFile(string(i.currentTerm), []byte(strconv.Itoa(term)), 0644)
+// 	if err != nil {
+// 		panic("error writing to current term file:" + err.Error())
+// 	}
+// }
+// func (i *Instance) getCurrentTerm() (term int) {
+// 	data, err := ioutil.ReadFile(string(i.currentTerm))
+// 	if err != nil {
+// 		panic("could not read current term: " + err.Error())
+// 	}
+// 	term, err = strconv.Atoi(string(data))
+// 	if err != nil {
+// 		panic("could not read current term: " + err.Error())
+// 	}
+// 	return
+// }
 
 var stateContext = make(chan interface{}) //should be unbuffered
 
@@ -94,5 +100,14 @@ func (i *Instance) Start(st State) {
 	i.State = st
 	ctx, cancel := context.WithCancel(context.Background())
 	i.cancelState = cancel
-	go i.State.Start(ctx)
+	go i.State.Start(ctx, i)
+}
+
+// TODO: Implement Vote
+func (i *Instance) vote(candidateID uuid.UUID) {
+
+}
+
+func (i *Instance) lastLogIndeAndTerm() (index int, term int) {
+	return index, term //TODO:
 }

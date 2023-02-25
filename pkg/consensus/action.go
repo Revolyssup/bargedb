@@ -12,6 +12,7 @@ type Action struct {
 }
 
 const (
-	TIMEOUT ActionName = "Timeout"
-	RESTART ActionName = "RESTART_TIMER"
+	TIMEOUT                   ActionName = "Timeout"
+	RESTART                   ActionName = "RESTART_TIMER"
+	BecomeFollowerImmediately ActionName = "BecomeFollowerImmediately"
 )

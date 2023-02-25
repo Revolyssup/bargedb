@@ -22,20 +22,22 @@ func TestMockTransport(t *testing.T) {
 	mt3.RegisterExecuter(&me3)
 	ConnectMockInstances(&mt1, &mt2, &mt3)
 	response := mt1.AppendEntries(0, uuid.UUID{}, log.Index(0), 0, nil, 0)
-	for id, res := range response {
-		if id == mt1id {
-			if res["currentTerm"] != 1 {
-				t.Errorf("Expected current term %v and recieved %v", 1, res["currentTerm"])
+	for resp := range response {
+		for id, res := range resp {
+			if id == mt1id {
+				if res["currentTerm"] != 1 {
+					t.Errorf("Expected current term %v and recieved %v", 1, res["currentTerm"])
+				}
 			}
-		}
-		if id == mt2id {
-			if res["currentTerm"] != 2 {
-				t.Errorf("Expected current term %v and recieved %v", 2, res["currentTerm"])
+			if id == mt2id {
+				if res["currentTerm"] != 2 {
+					t.Errorf("Expected current term %v and recieved %v", 2, res["currentTerm"])
+				}
 			}
-		}
-		if id == mt3id {
-			if res["currentTerm"] != 3 {
-				t.Errorf("Expected current term %v and recieved %v", 3, res["currentTerm"])
+			if id == mt3id {
+				if res["currentTerm"] != 3 {
+					t.Errorf("Expected current term %v and recieved %v", 3, res["currentTerm"])
+				}
 			}
 		}
 	}

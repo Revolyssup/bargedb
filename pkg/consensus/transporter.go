@@ -25,7 +25,7 @@ type Transport interface {
 			term: currentTerm, for leader to update itself
 			success: true if follower contained entry matching prevLogIndex and prevLogTerm
 	*/
-	AppendEntries(term int, leaderID uuid.UUID, prevLogIndex log.Index, prevLogEntry int, entries []log.Entry, leaderCommit int) map[uuid.UUID]map[string]interface{}
+	AppendEntries(term int, leaderID uuid.UUID, prevLogIndex log.Index, prevLogEntry int, entries []log.Entry, leaderCommit int) chan map[uuid.UUID]map[string]interface{}
 	/*
 		Arguments:
 			term: candidate’s term
@@ -36,7 +36,7 @@ type Transport interface {
 			term: currentTerm, for candidate to update itself
 			voteGranted: true means candidate received vote
 	*/
-	RequestVote(term int, candidateID uuid.UUID, lastLogIndex log.Index, lastLogTerm int) map[uuid.UUID]map[string]interface{}
+	RequestVote(term int, candidateID uuid.UUID, lastLogIndex log.Index, lastLogTerm int) chan map[uuid.UUID]map[string]interface{}
 	//For recievers
 	Listen()
 	RegisterExecuter(transport.Executer)

@@ -1,6 +1,8 @@
 package transport
 
 import (
+	"sync"
+
 	"github.com/Revolyssup/bargedb/pkg/log"
 	"github.com/google/uuid"
 )
@@ -33,22 +35,44 @@ func (mi *MockInstance) RegisterExecuter(e Executer) {
 	mi.Exec = e
 }
 
-func (mi *MockInstance) AppendEntries(term int, leaderID uuid.UUID, prevLogIndex log.Index, prevLogEntry int, entries []log.Entry, leaderCommit int) map[uuid.UUID]map[string]interface{} {
-	var response = make(map[uuid.UUID]map[string]interface{})
+func (mi *MockInstance) AppendEntries(term int, leaderID uuid.UUID, prevLogIndex log.Index, prevLogEntry int, entries []log.Entry, leaderCommit int) chan map[uuid.UUID]map[string]interface{} {
+	var response = make(chan map[uuid.UUID]map[string]interface{})
+	var wg sync.WaitGroup
 	for _, peer := range mi.Peers {
-		resint, _ := peer.Exec.RecievedAppendEntries(term, leaderID, prevLogIndex, prevLogEntry, entries, leaderCommit)
-		response[peer.ID] = make(map[string]interface{})
-		response[peer.ID]["currentTerm"] = resint
+		wg.Add(1)
+		go func(peer MockInstance) {
+			defer wg.Done()
+			resint, _ := peer.Exec.RecievedAppendEntries(term, leaderID, prevLogIndex, prevLogEntry, entries, leaderCommit)
+			res := make(map[uuid.UUID]map[string]interface{})
+			res[peer.ID] = make(map[string]interface{})
+			res[peer.ID]["currentTerm"] = resint
+			response <- res
+		}(peer)
 	}
+	go func(wg *sync.WaitGroup) {
+		wg.Wait()
+		close(response)
+	}(&wg)
 	return response
 }
 
-func (mi *MockInstance) RequestVote(term int, candidateID uuid.UUID, lastLogIndex log.Index, lastLogTerm int) map[uuid.UUID]map[string]interface{} {
-	var response = make(map[uuid.UUID]map[string]interface{})
+func (mi *MockInstance) RequestVote(term int, candidateID uuid.UUID, lastLogIndex log.Index, lastLogTerm int) chan map[uuid.UUID]map[string]interface{} {
+	var response = make(chan map[uuid.UUID]map[string]interface{})
+	var wg sync.WaitGroup
 	for _, peer := range mi.Peers {
-		resint, _ := peer.Exec.RespondVote(term, candidateID, lastLogIndex, lastLogTerm)
-		response[peer.ID] = make(map[string]interface{})
-		response[peer.ID]["currentTerm"] = resint
+		wg.Add(1)
+		go func(peer MockInstance) {
+			defer wg.Done()
+			resint, _ := peer.Exec.RespondVote(term, candidateID, lastLogIndex, lastLogTerm)
+			res := make(map[uuid.UUID]map[string]interface{})
+			res[peer.ID] = make(map[string]interface{})
+			res[peer.ID]["currentTerm"] = resint
+			response <- res
+		}(peer)
 	}
+	go func(wg *sync.WaitGroup) {
+		wg.Wait()
+		close(response)
+	}(&wg)
 	return response
 }

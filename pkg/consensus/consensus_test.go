@@ -7,6 +7,7 @@ import (
 	"github.com/Revolyssup/bargedb/pkg/log"
 	"github.com/Revolyssup/bargedb/pkg/store"
 	"github.com/Revolyssup/bargedb/pkg/transport"
+	"github.com/google/uuid"
 )
 
 func TestAppendEntries(t *testing.T) {
@@ -14,17 +15,17 @@ func TestAppendEntries(t *testing.T) {
 	t1 := transport.MockInstance{}
 
 	in1 := New(&t1, store.New(store.INMEM), log1, config{
-		ID:          "./tests_config/barge.id",
-		CurrentTerm: "./tests_config/barge.currentTerm",
-		VotedFor:    "./tests_config/barge.votedFor",
+		ID:          uuid.New(),
+		CurrentTerm: 0,
+		VotedFor:    uuid.Nil,
 	})
 
 	log2, _ := log.NewInstance("./index2.barge", "./data2.barge")
 	t2 := transport.MockInstance{}
 	in2 := New(&t2, store.New(store.INMEM), log2, config{
-		ID:          "./tests_config/barge copy.id",
-		CurrentTerm: "./tests_config/barge copy.currentTerm",
-		VotedFor:    "./tests_config/barge copy.votedFor",
+		ID:          uuid.New(),
+		CurrentTerm: 0,
+		VotedFor:    uuid.Nil,
 	})
 	transport.ConnectMockInstances(&t1, &t2)
 
@@ -35,4 +36,6 @@ func TestAppendEntries(t *testing.T) {
 	in2.Start(&FollowerState{
 		timeout: 300 * time.Millisecond,
 	})
+
+	//TODO: Make assertions on final state
 }

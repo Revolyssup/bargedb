@@ -53,6 +53,7 @@ type Instance struct {
 	cancelState context.CancelFunc //Calling this function, cancels the run of already running state
 }
 
+// TODO:
 func (i *Instance) SetConfig(cfg config) {
 
 }
@@ -87,8 +88,6 @@ func (i *Instance) RespondVote(term int, candidateID uuid.UUID, lastLogIndex log
 // 	}
 // 	return
 // }
-
-var stateContext = make(chan interface{}) //should be unbuffered
 
 // Start is the daemon running in the background creating timeouts/generating actions.
 // When start is run, cancel the previous Start from another state and run Start again with current state.

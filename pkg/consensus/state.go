@@ -59,7 +59,25 @@ func (l *CandidateState) Start(ctx context.Context, consensus *Instance) {
 				})
 			}()
 			index, term := consensus.lastLogIndeAndTerm()
-			consensus.Transport.RequestVote(l.term, l.CandidateID, log.Index(index), term)
+			totalServers := len(consensus.nextIndex) + 1
+			voted := 0
+			go func() {
+				for resp := range consensus.Transport.RequestVote(l.term, l.CandidateID, log.Index(index), term) {
+					go func(resp map[uuid.UUID]map[string]interface{}) {
+						for _, r := range resp {
+							if r["voted"].(bool) {
+								voted++
+							}
+						}
+					}(resp)
+					if voted > totalServers/2 {
+						consensus.Start(&LeaderState{})
+						return
+					}
+				}
+
+			}()
+
 		}
 	}
 }
@@ -69,6 +87,9 @@ func (l *LeaderState) ApplyAction(consensus *Instance, act Action) bool {
 
 	}
 	return false
+}
+func (l *LeaderState) Start(ctx context.Context, consensus *Instance) {
+
 }
 
 type FollowerState struct {

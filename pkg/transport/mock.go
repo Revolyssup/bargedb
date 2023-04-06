@@ -63,10 +63,11 @@ func (mi *MockInstance) RequestVote(term int, candidateID uuid.UUID, lastLogInde
 		wg.Add(1)
 		go func(peer MockInstance) {
 			defer wg.Done()
-			resint, _ := peer.Exec.RespondVote(term, candidateID, lastLogIndex, lastLogTerm)
+			resint, voted := peer.Exec.RespondVote(term, candidateID, lastLogIndex, lastLogTerm)
 			res := make(map[uuid.UUID]map[string]interface{})
 			res[peer.ID] = make(map[string]interface{})
 			res[peer.ID]["currentTerm"] = resint
+			res[peer.ID]["voted"] = voted
 			response <- res
 		}(peer)
 	}

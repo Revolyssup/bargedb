@@ -1,8 +1,7 @@
-# BargeDB
+# BargeDB [In progress]
 
-A lightweight SDK for distributed go applications to form RAFT consensus based distributed persistent key value store. 
-Each instance of your application GETS and SETS data through the exposed methods of BargeDB instance and BargeDB internally handles the consistency across all instances via gRPC
-
+Consensus layer based on RAFT with pluggable storage and transport interface. Default storage is just go maps and default transport is gRPC. 
+Reference: https://raft.github.io/raft.pdf
 ![image](./barge.png)
 
 - BargeDB will support [USE ](https://github.com/utkarsh-pro/use) as one of the storage options

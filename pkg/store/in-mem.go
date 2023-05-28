@@ -74,12 +74,12 @@ func (ims *InMemStore) Len() (int, error) {
 
 // PhysicalSnapshot writes snapshot of the storage data to
 // the given writer.
-// Since this is an in-mem implementation we dont need Physical snapshot.(Also the log in Consensus layer stores data on non-volatile storage)
+// Todo:
 func (ims *InMemStore) PhysicalSnapshot(w io.Writer) error {
 	return nil
 }
 
-// Close closes the storage. (Since this is an in-mem implementation, we don't really need to implement Close)
+// Close closes the storage. (Since this is a map implementation, we don't really need to implement Close for now as we are not holding to any file descriptor)
 func (ims *InMemStore) Close() error {
 	return nil
 }

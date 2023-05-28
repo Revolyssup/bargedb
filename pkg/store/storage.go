@@ -7,7 +7,7 @@ import (
 type Type string
 
 const (
-	USE   Type = "USE"
+	USE   Type = "USE" //Support to be added: https://github.com/utkarsh-pro/use
 	INMEM Type = "INMEM"
 )
 

@@ -1,9 +1,0 @@
-static:
-  name: server2 #The server is removed from servers[i] where servers[i].name==name and this field is to be updated at the startup by the operator. This is such that all instances can have the same configuration file with this one field changed.
-  servers:
-    - name: server1
-      address: localhost:1234 #This is the gRPC address of the peer
-
-dynamic: #This is an optional field
-  name: infoserver
-  address: localhost:1233

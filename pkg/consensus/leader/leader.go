@@ -1,6 +1,6 @@
 package leader
 
-import "github.com/Revolyssup/bargedb/pkg/consensus"
+import "github.com/revolyssup/bargedb/pkg/consensus"
 
 type Leader struct{}
 

@@ -8,8 +8,8 @@ import (
 
 type Transport interface {
 	GetOperationChannel() <-chan Operation //Consensus layer will recieve operations from here
-	AppendEntries(ctx context.Context, ae AppendEntries) (term uint, success bool)
-	RequestVote(ctx context.Context, rv RequestVote) (term uint, voteGranted bool)
+	AppendEntries(ctx context.Context, candidateID model.CandidateID, ae AppendEntries) (term uint, success bool)
+	RequestVote(ctx context.Context, candidateID model.CandidateID, rv RequestVote) (term uint, voteGranted bool)
 }
 
 type Operation interface {

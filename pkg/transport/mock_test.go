@@ -49,9 +49,9 @@ func TestMock(t *testing.T) {
 		entries:      []model.LogEntry{{Term: 1, Data: []byte("entry1"), Index: 1}},
 		leaderCommit: 0,
 	}
-	term, success := t1.AppendEntries(context.Background(), candidate2, ae)
-	assert.Equal(t, term, uint(1), "Expected term to be 1")
-	assert.Equal(t, success, true, "Expected AppendEntries to succeed")
+	res := t1.AppendEntries(context.Background(), candidate2, ae)
+	assert.Equal(t, res.term, uint(2), "Expected term to be 1")
+	assert.Equal(t, res.success, true, "Expected AppendEntries to succeed")
 	msg := <-t2recieve
 	assert.Equal(t, msg, "Received AppendEntries from candidate1 with term 1", "Expected message to match")
 
@@ -62,9 +62,9 @@ func TestMock(t *testing.T) {
 		lastLogIndex: 0,
 		lastLogTerm:  0,
 	}
-	term, voteGranted := t1.RequestVote(context.Background(), candidate2, rv)
-	assert.Equal(t, term, uint(1), "Expected term to be 1")
-	assert.Equal(t, voteGranted, true, "Expected RequestVote to succeed")
+	res2 := t1.RequestVote(context.Background(), candidate2, rv)
+	assert.Equal(t, res2.term, uint(2), "Expected term to be 1")
+	assert.Equal(t, res2.voteGranted, true, "Expected RequestVote to succeed")
 	msg = <-t2recieve
 	assert.Equal(t, msg, "Received RequestVote from candidate1 with term 1", "Expected message to match")
 }

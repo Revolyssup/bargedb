@@ -7,9 +7,15 @@ import (
 )
 
 type Transport interface {
-	GetOperationChannel() <-chan Operation //Consensus layer will recieve operations from here
-	AppendEntries(ctx context.Context, candidateID model.CandidateID, ae AppendEntries) (term uint, success bool)
-	RequestVote(ctx context.Context, candidateID model.CandidateID, rv RequestVote) (term uint, voteGranted bool)
+	GetOperationChannel() <-chan OperationWithResponseChan //Consensus layer will recieve operations from here
+	AppendEntries(ctx context.Context, candidateID model.CandidateID, ae AppendEntries) AppendEntriesResponse
+	RequestVote(ctx context.Context, candidateID model.CandidateID, rv RequestVote) RequestVoteResponse
+	Start() error
+}
+
+type OperationWithResponseChan struct {
+	Operation
+	Response chan Operation //After processing request, transport layer will wait for the response here
 }
 
 type Operation interface {
@@ -18,9 +24,29 @@ type Operation interface {
 type OperationType string
 
 const (
-	AppendEntriesOp OperationType = "AppendEntries"
-	RequestVoteOp   OperationType = "RequestVote"
+	AppendEntriesOp  OperationType = "AppendEntries"
+	RequestVoteOp    OperationType = "RequestVote"
+	AppendEntriesRes OperationType = "AppendEntriesResponse"
+	RequestVoteRes   OperationType = "RequestVoteResponse"
 )
+
+type AppendEntriesResponse struct {
+	term    uint
+	success bool
+}
+
+func (ar AppendEntriesResponse) Type() OperationType {
+	return AppendEntriesRes
+}
+
+type RequestVoteResponse struct {
+	term        uint
+	voteGranted bool
+}
+
+func (rv RequestVoteResponse) Type() OperationType {
+	return RequestVoteRes
+}
 
 type AppendEntries struct {
 	term         uint
@@ -31,6 +57,9 @@ type AppendEntries struct {
 	leaderCommit uint
 }
 
+func (ar AppendEntries) Term() uint {
+	return ar.term
+}
 func (ar AppendEntries) Type() OperationType {
 	return AppendEntriesOp
 }
